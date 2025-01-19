@@ -1,9 +1,11 @@
 import type { StrategyVerifyCallback } from "remix-auth";
 import {
-  OAuth2Profile,
+  type OAuth2Profile,
   OAuth2Strategy,
-  OAuth2StrategyVerifyParams,
+  type OAuth2StrategyVerifyParams,
 } from "remix-auth-oauth2";
+
+const discordBaseURL = "https://discord.com";
 
 const discordApiBaseURL = "https://discord.com/api/v10";
 
@@ -151,6 +153,7 @@ export interface DiscordStrategyOptions {
   scope?: Array<DiscordScope>;
   integrationType?: DiscordIntegrationType;
   prompt?: "none" | "consent";
+  apiURL?: string;
 }
 
 export interface DiscordExtraParams
@@ -265,23 +268,26 @@ export class DiscordStrategy<User> extends OAuth2Strategy<
       scope,
       integrationType,
       prompt,
+      apiURL,
     }: DiscordStrategyOptions,
     verify: StrategyVerifyCallback<
       User,
       OAuth2StrategyVerifyParams<DiscordProfile, DiscordExtraParams>
     >,
   ) {
+    const base = apiURL ?? discordApiBaseURL;
     super(
       {
         clientID,
         clientSecret,
         callbackURL,
-        authorizationURL: `${discordApiBaseURL}/oauth2/authorize`,
-        tokenURL: `${discordApiBaseURL}/oauth2/token`,
+        authorizationURL: `${discordBaseURL}/oauth2/authorize`,
+        tokenURL: `${base}/oauth2/token`,
       },
       verify,
     );
 
+    this.userInfoURL = `${base}/users/@me`;
     this.scope = (scope ?? ["identify", "email"]).join(" ");
     if (
       scope?.includes("applications.commands") &&
